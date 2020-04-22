@@ -3,8 +3,19 @@
 <head>
 <style>
 table, th, td {
-  border: 1px solid black;
+  border: 1px solid white;
   border-collapse: collapse;
+}
+td.cnt {
+  text-align: center;
+}
+tr:nth-child(even) {
+  background-color: #3f3f3f;
+}
+body {
+  background-color: #1a1a1a;
+  color: #d7dadc;
+  font-family: Monaco, monospace;
 }
 </style>
 </head>
@@ -17,6 +28,7 @@ table, th, td {
 <label for="myDate"> Date:</label>
 <input type="date" id="myDate">
 <button onclick="convertTime()">Submit</button>
+
 
 
 <p>Here are the 12 patterns that day:</p>
@@ -41,6 +53,13 @@ table, th, td {
 
 <p id="poop"></p>
 
+<!-- 
+If you can see this, consider funding my chocolate addiction
+BTC:  1DonutSAQzU7uAyDQBfp3yfpjRxH8btMtf
+LTC:  LdSTEELqdiwcqU6oG9YNSPUcbgNmbGF15v
+DOGE: DPastrybfBtdHzvw2YPHjHyy8cbN2ZECjN
+-->
+
 <script>
 var pattern = [1,4,2,5,3,6,1,4,2,5,3,6,
 4,1,5,2,6,3,4,1,5,2,6,3,
@@ -58,6 +77,12 @@ var schedules = ["South at Night, Galadion at Day, North at Sunset",
 "Galadion at Day, South at Sunset, Rhotano at Night",
 "Galadion at Sunset, South at Night, Rhotano at Day"]
 
+
+var timeRegion = 'en-US';
+var timeFormat = { weekday: 'short', month: 'short', day: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', timeZoneName:'short'};
+
+
+//Force myDate box to start at today's date
 //thank you stackoverflow
 var date = new Date();
 var day = date.getDate();
@@ -87,8 +112,8 @@ function convertTime() {
     var temp = ((tempTime + i >= 72) ? (tempTime + i - 72):(tempTime + i));
     temptext += "<tr><td>";
     var tempoop = new Date((selectedTwoHourChunk + i + 4) * (1000*60*60*2));
-    temptext += tempoop.toString();
-    temptext += "</td><td>";
+	temptext += tempoop.toLocaleString(timeRegion, timeFormat);
+    temptext += "</td><td class='cnt'>";
     temptext += pattern[temp];
     temptext += "</td><td>";
     temptext += routeNames[pattern[temp]-1];
@@ -98,7 +123,7 @@ function convertTime() {
    }
    
    temptext += "</table>";
-    
+  
   document.getElementById("demo").innerHTML = temptext;
 }
 
@@ -140,7 +165,7 @@ function printRoutes() {
     //convert from twoHourChunks to real time
     //SUBTRACT offset to get real time
     var tempoop = new Date((matchedTimes[i] - offset) * (1000*60*60*2));
-    temptext += tempoop.toString();
+    temptext += tempoop.toLocaleString(timeRegion, timeFormat);
     temptext +="</td></tr>";
   }
   
