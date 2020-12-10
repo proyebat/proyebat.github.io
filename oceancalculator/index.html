@@ -39,15 +39,8 @@ body {
 
 <p>Use these two stupid boxes to select what you want to see, and how many.</p>
 
-<label for="routeNumber">Route: </label>
-<select id="routeNumber">
-  <option value="1">Sea Dragon + Coral</option>
-  <option value="2">Octo</option>
-  <option value="3">Sothis + Elasmo</option>
-  <option value="4">Sothis + Stonescale</option>
-  <option value="5">Jelly</option>
-  <option value="6">Shark + Coral</option>
-</select></br>
+<p id="droplist"></p>
+
 <label for="printQuantity">Number to Print:</label><input type="number" id="printQuantity" min="1" max="999" value="10">
 <button onclick="printRoutes()">Submit</button>
 
@@ -61,25 +54,49 @@ DOGE: DPastrybfBtdHzvw2YPHjHyy8cbN2ZECjN
 -->
 
 <script>
-var pattern = [1,4,2,5,3,6,1,4,2,5,3,6,
-4,1,5,2,6,3,4,1,5,2,6,3,
-2,5,3,6,1,4,2,5,3,6,1,4,
-5,2,6,3,4,1,5,2,6,3,4,1,
-3,6,1,4,2,5,3,6,1,4,2,5,
-6,3,4,1,5,2,6,3,4,1,5,2]
+var pattern = [7,10,1,4,8,11,2,5,12,3,6,
+7,10,1,4,8,11,2,5,9,3,6,
+7,10,1,4,8,11,2,5,9,12,6,
+7,10,1,4,8,11,2,5,9,12,3,
+7,10,1,4,8,11,2,5,9,12,3,6,
+10,1,4,8,11,2,5,9,12,3,6,
+7,1,4,8,11,2,5,9,12,3,6,
+7,10,4,8,11,2,5,9,12,3,6,
+7,10,1,8,11,2,5,9,12,3,6,
+7,10,1,4,11,2,5,9,12,3,6,
+7,10,1,4,8,2,5,9,12,3,6,
+7,10,1,4,8,11,5,9,12,3,6,
+7,10,1,4,8,11,2,9,12,3,6]
 
-var routeNames = ["Sea Dragon + Coral", "Octo", "Sothis + Elasmo", "Sothis + Stonescale", "Jelly", "Shark + Coral"]
+
+var routeNames = ["Sea Dragon + Coral", "Octo", "Sothis + Elasmo", "Sothis + Stonescale", "Jelly", "Shark + Coral", "Hafgufa + Elasmo", "Manta + Score?", "Toad + Crab?", "Hafgufa + Placodus", "Ballon + Stonescale", "Ballon + Manta"]
 
 var schedules = ["South at Night, Galadion at Day, North at Sunset",
 "South at Day, Galadion at Sunset, North at Night",
 "South at Sunset, Galadion at Night, North at Day",
 "Galadion at Night, South at Day, Rhotano at Sunset",
 "Galadion at Day, South at Sunset, Rhotano at Night",
-"Galadion at Sunset, South at Night, Rhotano at Day"]
+"Galadion at Sunset, South at Night, Rhotano at Day",
+"Ciel at Night, North at Day, Blood at Sunset",
+"Ciel at Day, North at Sunset, Blood at Night",
+"Ciel at Sunset, North at Night, Blood at Day",
+"Ciel at Night, Rhotano at Day, Sound at Sunset",
+"Ciel at Day, Rhotano at Sunset, Sound at Night",
+"Ciel at Sunset, Rhotano at Night, Sound at Day"]
+
 
 
 var timeRegion = 'en-US';
 var timeFormat = { weekday: 'short', month: 'short', day: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', timeZoneName:'short'};
+
+//generate drop down list
+var temptext = "<label for=\"routeNumber\">Route: </label>";
+temptext += "<select id=\"routeNumber\">";
+for (var i = 0; i < routeNames.length; i++) {
+temptext += "<option value=" + (i + 1) + ">" + routeNames[i] + "</option>";
+}
+temptext += "</select><br>";
+document.getElementById("droplist").innerHTML = temptext;
 
 
 //Force myDate box to start at today's date
@@ -99,9 +116,9 @@ function convertTime() {
   
   var selectedTwoHourChunk = Math.floor(selectedTime.getTime() / 1000 / (60*60*2));
   
-  var offset = 20;
-  
-  var tempTime = (selectedTwoHourChunk + offset) % 72;
+  //align the number that is assigned to the next two hour block to the pattern array
+  var offset = 88;
+  var tempTime = (selectedTwoHourChunk + offset) % pattern.length;
   
   var temptext = "";
   
@@ -109,10 +126,9 @@ function convertTime() {
   temptext += "<table><tr><th>Time</th><th>Route</th><th>Comment</th><th>Schedule</th></tr>";
   
   for (var i = 0; i < 12; i++) {
-    var temp = ((tempTime + i >= 72) ? (tempTime + i - 72):(tempTime + i));
+    var temp = ((tempTime + i >= pattern.length) ? (tempTime + i - pattern.length):(tempTime + i));
     temptext += "<tr><td>";
-    var tempoop = new Date((selectedTwoHourChunk + i + 4) * (1000*60*60*2));
-	temptext += tempoop.toLocaleString(timeRegion, timeFormat);
+    temptext += new Date((selectedTwoHourChunk + i + 4) * (1000*60*60*2)).toLocaleString(timeRegion, timeFormat);
     temptext += "</td><td class='cnt'>";
     temptext += pattern[temp];
     temptext += "</td><td>";
@@ -134,15 +150,21 @@ function printRoutes() {
   var currentTime = new Date();
   var currentTwoHourChunks = Math.floor(currentTime.getTime() / 1000 / (60*60*2));
   
-  //modify this offset as a crude way of modifying time zones and daylight savings
-  var offset = 16;
-  
-  var temptime = currentTwoHourChunks % 72;
+  //line up the patten array to the 2 hour segment count
+  var offset = 85;
+  var temptime = (currentTwoHourChunks+offset) % pattern.length;
   
   var temptext = "";
   
-  //temptext += "Current chunk " + currentTwoHourChunks + ", pattern " + temptime + ", Route is #" + pattern[temptime+offset] + "</br>";
-  //temptext += pQ + "</br></br>";
+  /*
+  //debugging to help find offset
+  temptext += new Date((currentTwoHourChunks) * (1000*60*60*2)).toLocaleString(timeRegion, timeFormat) + "</br>";
+  temptext += "Current chunk " + currentTwoHourChunks + ", pattern " + currentTwoHourChunks % pattern.length + "</br>";
+  for (var j = 0; j < 12; j++) {
+    temptext += "Route is #" + pattern[(temptime+j) % pattern.length] + "</br>";
+  }
+  temptext += "Routes to print: " + pQ + "</br></br>";
+  */
   
   temptext += "<table><tr><th>Times</th></tr>";
   
@@ -153,8 +175,8 @@ function printRoutes() {
   while (matches < pQ && tries < pQ*20) {
     //ADD offset to find pattern
     var temp = currentTwoHourChunks + tries + offset;
-    if (pattern[(temp % 72)] == rN) {
-      matchedTimes.push(temp);
+    if (pattern[(temp % pattern.length)] == rN) {
+      matchedTimes.push(temp+1);
       matches++;
     }
     tries++;
@@ -175,5 +197,4 @@ function printRoutes() {
 }
 </script>
 
-</body>
-</html>
+</body></html>
