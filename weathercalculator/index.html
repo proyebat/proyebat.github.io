@@ -1,20 +1,41 @@
 
-<!-- saved from url=(0014)about:internet -->
-<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-<script type="text/javascript" src="./weather.js">
-</script>
+<html><head><meta charset="UTF-8"><title>Another FFXIV Weather Calculator</title>
+<script type="text/javascript" src="./weather.js"></script>
 <script type="text/javascript" src="./jquery-2.1.4.min.js"></script>
-<!-- <script type="text/javascript" src="file:///C:/dev/jquery/jquery-2.1.4.js"> -->
-
 <script type="text/javascript">
+var optionsEnabled = false;
+var maxMatches = 10;
+var maxTries = maxMatches * 432; //A week's worth of windows attempted per match. There will be the rare windows that take 2-3 weeks but this averages out in the search. Looking at you, Ruby.
+
 var displayWeather = function() {
    $("#weatherDiv").text(WeatherFinder.getWeather(new Date(), $("#zoneSelect").val()));
+}
+
+function enableOptions(checkBox) {
+   optionsEnabled = checkBox.checked ? true : false;
+   if (optionsEnabled) {
+      optionsTemp = "<input type=\"date\" id=\"myDate\"/>Enter a Start Date<br>" + "<input type=\"number\" id=\"matchInput\" value=\"10\" min=\"1\" >Enter how many windows to find<br>";
+	  offsetTemp = "<input type=\"number\" id=\"offset\" value=\"0\" min=\"0\" max=\"759\">Enter in format \"HMM\"<br>" + "Example: Unconditional is 5:30ET so enter '530' as offset and check first box<br>" + "Do not enter greater than 8 hours, change your selected Eorzea Time(s)<br>";
+   } else {
+      optionsTemp = "";
+	  offsetTemp = "";
+   }
+   document.getElementById("optionsArea").innerHTML = optionsTemp;
+   document.getElementById("offsetInput").innerHTML = offsetTemp;
 }
 
 function findWeather() {
    $("#weatherDiv").text('');
    $("#weatherTableHeaderRow ~ tr").remove()
-   var weatherStartTime = WeatherFinder.getWeatherTimeFloor(new Date()).getTime();
+   if (optionsEnabled && document.getElementById("myDate").value != 0) {
+      var weatherStartTime = WeatherFinder.getWeatherTimeFloor(new Date(document.getElementById("myDate").value)).getTime();
+   } else {
+      var weatherStartTime = WeatherFinder.getWeatherTimeFloor(new Date()).getTime();
+   }
+   if (optionsEnabled) {
+      maxMatches = document.getElementById("matchInput").value;
+	  maxTries = maxMatches * 432;	//See above maxTries comment.
+   }
    var weatherStartHour = WeatherFinder.getEorzeaHour(weatherStartTime);
    var zone = $("#zoneSelect").val();
    var targetWeather = $("#weatherSelect").val();
@@ -23,7 +44,7 @@ function findWeather() {
    var matches = 0;
    var weather = WeatherFinder.getWeather(weatherStartTime, zone);
    var prevWeather = WeatherFinder.getWeather(weatherStartTime-1, zone);
-   while (tries < 5000 && matches < 20) {
+   while (tries < maxTries && matches < maxMatches) {
       var weatherMatch = targetWeather == null;
       var prevWeatherMatch = targetPrevWeather == null;
       var timeMatch = false;
@@ -43,7 +64,24 @@ function findWeather() {
       }
       if (weatherMatch && prevWeatherMatch && timeMatch) {
          var weatherDate = new Date(weatherStartTime);
-         $("#weatherTable").append('<tr><td>' + prevWeather + '</td><td>' + weather + '</td><td>' + weatherStartHour + ':00</td><td>' + weatherDate + '</td></tr>');
+		 
+		 if (optionsEnabled) {
+			tempHour = Math.floor(document.getElementById("offset").value / 100);
+			tempMinutes = document.getElementById("offset").value % 100;
+			temptime = tempHour + (tempMinutes / 60);
+			if (tempMinutes < 10) {
+				tempMinutes = "0" + tempMinutes;	//convert to string and append digit, safe at this step
+			}
+			$("#weatherTable").append('<tr><td>' + prevWeather + '</td><td>' + weather + '</td><td>' + (weatherStartHour + tempHour) + ':' + tempMinutes + '</td><td>' + new Date(temptime * 175 * 1000 + weatherStartTime) + '</td></tr>');
+			//$("#weatherTable").append('<tr><td>' + prevWeather + '</td><td>' + weather + '</td><td>' + (weatherStartHour + tempHour) + ':' + tempMinutes + '</td><td>' + (temptime * 175 * 1000 + weatherStartTime)/1000 + '</td></tr>');
+			//$("#weatherTable").append('<tr><td>' + new Date(temptime * 175 * 1000 + weatherStartTime) + '</td></tr>');
+		 } else {
+			$("#weatherTable").append('<tr><td>' + prevWeather + '</td><td>' + weather + '</td><td>' + weatherStartHour + ':00</td><td>' + new Date(weatherStartTime) + '</td></tr>');
+			//$("#weatherTable").append('<tr><td>' + prevWeather + '</td><td>' + weather + '</td><td>' + weatherStartHour + ':00</td><td>' + (weatherStartTime)/1000 + '</td></tr>');
+			//$("#weatherTable").append('<tr><td>' + new Date(weatherStartTime) + '</td></tr>');
+		 }
+
+         //$("#weatherTable").append('<tr><td>' + prevWeather + '</td><td>' + weather + '</td><td>' + weatherStartHour + ':00</td><td>' + weatherDate + '</td></tr>');
          matches++;
       }
       weatherStartTime += 8 * 175 * 1000; // Increment by 8 Eorzean hours
@@ -53,7 +91,7 @@ function findWeather() {
       tries++;
    }
    if (matches == 0) {
-      $("#weatherDiv").append("Couldn't find the desired conditions over the next 1000 weather cycles (~16 Earth days).  Make sure you have selected at least one time period.<br/>");
+      $("#weatherDiv").append("Couldn't find the desired conditions. Make sure you have selected at least one time period.<br/>");
    }
 }
 
@@ -67,8 +105,6 @@ function populateWeather() {
 	  selects.append('<option value="' + weathers[w] + '">' + weathers[w] + '</option>');
    }
 }
-
-
 
 </script>
 <style>
@@ -148,16 +184,17 @@ body {
 <option value="The Tempest">The Tempest</option>
 </select></td></tr>
 
-<!--new page layout will be a start date, below that, a zone to choose, and then a start button
-SE opens the game at a specific time for maintenance, so we don't have to give the user the option to fine tune this to the hour. Just giving the day, and then offseting the hours to match SE's opening time should be enough.-->
-<input type="date" id="myDate">
-<button onclick="convertTime()">Submit</button>
+<input type="checkbox" id="advancedOptions" onclick="enableOptions(this)" /> Advanced Options<br>
 
 <tr><td>Desired Weather: </td><td><select id="weatherSelect" multiple="true" size="7"><option value="">Any</option></select></td></tr>
 <tr><td>Transition From: </td><td><select id="previousWeatherSelect" multiple="true" size="7"><option value="">Any</option></select><br></td></tr>
-<tr><td>Eorzea Time: </td><td><input type="checkbox" name="timeBox" value="0" id="timeBox0" checked="checked">00:00-07:59  <br><input type="checkbox" name="timeBox" value="8" id="timeBox8" checked="checked">08:00-15:59  <br><input type="checkbox" name="timeBox" value="16" id="timeBox16" checked="checked">16:00-23:59  <br></td></tr>
+<tr><td>Eorzea Time: </td><td><input type="checkbox" name="timeBox" value="0" id="timeBox0" checked="checked">00:00-07:59  <br><input type="checkbox" name="timeBox" value="8" id="timeBox8" checked="checked">08:00-15:59  <br><input type="checkbox" name="timeBox" value="16" id="timeBox16" checked="checked">16:00-23:59  <br><div id="offsetInput"></div></td></tr>
 </tbody></table>
+
+<div id="optionsArea"></div>
+
 <button onclick="findWeather()">Find Weather</button><br>
+
 <table id="weatherTable">
 <tbody><tr id="weatherTableHeaderRow"><th>Previous Weather</th><th>Current Weather</th><th>Eorzea Time</th><th>Local Time</th></tr>
 </tbody></table>
