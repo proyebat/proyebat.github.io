@@ -98,7 +98,15 @@ weatherChances: {
 "Amh Araeng": function(chance) { if ((chance -= 45) < 0) { return "Fair Skies"; } else if ((chance -= 15) < 0) { return "Clouds"; } else if ((chance -= 10) < 0) { return "Dust Storms"; } else if ((chance -= 10) < 0) { return "Heat Waves"; } else { return "Clear Skies"; } },
 "Il Mheg": function(chance) { if ((chance -= 10) < 0) { return "Rain"; } else if ((chance -= 10) < 0) { return "Fog"; } else if ((chance -= 15) < 0) { return "Clouds"; } else if ((chance -= 10) < 0) { return "Thunderstorms"; } else if ((chance -= 15) < 0) { return "Clear Skies"; } else { return "Fair Skies"; } },
 "The Rak'tika Greatwood": function(chance) { if ((chance -= 10) < 0) { return "Fog"; } else if ((chance -= 10) < 0) { return "Rain"; } else if ((chance -= 10) < 0) { return "Umbral Wind"; } else if ((chance -= 15) < 0) { return "Clear Skies"; } else if ((chance -= 40) < 0) { return "Fair Skies"; } else { return "Clouds"; } },
-"The Tempest": function(chance) { if ((chance -= 20) < 0) { return "Clouds"; } else if ((chance -= 60) < 0) { return "Fair Skies"; } else { return "Clear Skies"; } }
+"The Tempest": function(chance) { if ((chance -= 20) < 0) { return "Clouds"; } else if ((chance -= 60) < 0) { return "Fair Skies"; } else { return "Clear Skies"; } },
+"Old Sharlayan": function(chance) { if ((chance -= 10) < 0) { return "Clear Skies"; } else if ((chance -= 40) < 0) { return "Fair Skies"; } else if ((chance -= 20) < 0) { return "Clouds"; } else if ((chance -= 15) < 0) { return "Fog"; } else { return "Snow"; } },
+"Labyrinthos": function(chance) { if ((chance -= 10) < 0) { return "Clear Skies"; } else if ((chance -= 50) < 0) { return "Fair Skies"; } else if ((chance -= 25) < 0) { return "Clouds"; } else { return "Rain"; } },
+"Radz-at-Han": function(chance) { if ((chance -= 10) < 0) { return "Fog"; } else if ((chance -= 15) < 0) { return "Rain"; } else if ((chance -= 15) < 0) { return "Clear Skies"; } else if ((chance -= 45) < 0) { return "Fair Skies"; } else { return "Clouds"; } },
+"Thavnair": function(chance) { if ((chance -= 10) < 0) { return "Fog"; } else if ((chance -= 10) < 0) { return "Rain"; } else if ((chance -= 5) < 0) { return "Showers"; } else if ((chance -= 15) < 0) { return "Clear Skies"; } else if ((chance -= 45) < 0) { return "Fair Skies"; } else { return "Clear Skies"; } },
+"Garlemald": function(chance) { if ((chance -= 45) < 0) { return "Snow"; } else if ((chance -= 5) < 0) { return "Thunderstorms"; } else if ((chance -= 5) < 0) { return "Rain"; } else if ((chance -= 5) < 0) { return "Fog"; } else if ((chance -= 25) < 0) { return "Clouds"; } else if ((chance -= 10) < 0) { return "Fair Skies"; } else { return "Clear Skies"; } },
+"Mare Lamentorum": function(chance) { if ((chance -= 15) < 0) { return "Umbral Wind"; } else if ((chance -= 15) < 0) { return "Moon Dust"; } else { return "Fair Skies"; } },
+"Elpis": function(chance) { if ((chance -= 25) < 0) { return "Clouds"; } else if ((chance -= 15) < 0) { return "Umbral Wind"; } else if ((chance -= 45) < 0) { return "Fair Skies"; } else { return "Clear Skies"; } },
+"Ultima Thule": function(chance) { if ((chance -= 15) < 0) { return "Astromagnetic Storm"; } else if ((chance -= 70) < 0) { return "Fair Skies"; } else { return "Umbral Wind"; } }
 },
 
 weatherLists: {
@@ -152,6 +160,14 @@ weatherLists: {
 "Amh Araeng": ["Fair Skies", "Clouds", "Dust Storms", "Heat Waves", "Clear Skies"],
 "Il Mheg": ["Rain", "Fog", "Clouds", "Thunderstorms", "Clear Skies", "Fair Skies"],
 "The Rak'tika Greatwood": ["Fog", "Rain", "Umbral Wind", "Clear Skies", "Fair Skies", "Clouds"],
-"The Tempest": ["Clouds", "Fair Skies", "Clear Skies"]
+"The Tempest": ["Clouds", "Fair Skies", "Clear Skies"],
+"Old Sharlayan": ["Clear Skies", "Fair Skies", "Clouds", "Fog", "Snow"],
+"Labyrinthos": ["Clear Skies", "Fair Skies", "Clouds", "Rain"],
+"Radz-at-Han": ["Fog", "Rain", "Clear Skies", "Fair Skies", "Clouds"],
+"Thavnair": ["Fog", "Rain", "Showers", "Clear Skies", "Fair Skies", "Clouds"],
+"Garlemald": ["Snow", "Thunderstorms", "Rain", "Fog", "Clouds", "Fair Skies", "Clear Skies"],
+"Mare Lamentorum": ["Umbral Wind", "Moon Dust", "Fair Skies"],
+"Elpis": ["Clouds", "Umbral Wind", "Fair Skies", "Clear Skies"],
+"Ultima Thule": ["Astromagnetic Storm", "Fair Skies", "Umbral Wind"]
 }
 };
