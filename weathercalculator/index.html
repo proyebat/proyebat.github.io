@@ -31,7 +31,7 @@ function findWeather() {
 	  const diff = new Date().getTimezoneOffset() * 60 * 1000 + 1;	//calculate time difference between user's timezone and UTC
 	  weatherStartTime += diff;
    } else {
-      var weatherStartTime = WeatherFinder.getWeatherTimeFloor(new Date()).getTime();
+      var weatherStartTime = WeatherFinder.getWeatherTimeFloor(new Date()).getTime()+1;
    }
    if (optionsEnabled) {
       maxMatches = document.getElementById("matchInput").value;
@@ -44,10 +44,10 @@ function findWeather() {
    var tries = 0;
    var matches = 0;
    var weather = WeatherFinder.getWeather(weatherStartTime, zone);
-   var prevWeather = WeatherFinder.getWeather(weatherStartTime-1, zone);
+   var prevWeather = WeatherFinder.getWeather(weatherStartTime-1400000, zone); //go back one window in milliseconds
    while (tries < maxTries && matches < maxMatches) {
-      var weatherMatch = targetWeather == null;
-      var prevWeatherMatch = targetPrevWeather == null;
+      var weatherMatch = weather == null;
+      var prevWeatherMatch = prevWeather == null;
       var timeMatch = false;
       for (var i in targetWeather) {
          if (targetWeather[i] == "" || targetWeather[i] == weather) {
