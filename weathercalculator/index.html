@@ -28,6 +28,8 @@ function findWeather() {
    $("#weatherTableHeaderRow ~ tr").remove()
    if (optionsEnabled && document.getElementById("myDate").value != 0) {
       var weatherStartTime = WeatherFinder.getWeatherTimeFloor(new Date(document.getElementById("myDate").value)).getTime();
+	  const diff = new Date().getTimezoneOffset() * 60 * 1000 + 1;	//calculate time difference between user's timezone and UTC
+	  weatherStartTime += diff;
    } else {
       var weatherStartTime = WeatherFinder.getWeatherTimeFloor(new Date()).getTime();
    }
