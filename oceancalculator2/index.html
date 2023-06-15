@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html><head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<style>
+table, th, td {
+  border: 1px solid white;
+  border-collapse: collapse;
+}
+td.cnt {
+  text-align: center;
+}
+tr:nth-child(even) {
+  background-color: #3f3f3f;
+}
+body {
+  background-color: #1a1a1a;
+  color: #d7dadc;
+  font-family: Monaco, monospace;
+}
+</style>
+</head>
+<body>
+
+<h2>A Dumb Time Calculator for New Ocean Fishing</h2>
+
+<p>Use this stupid box to select a date that you want to see.</p>
+
+<label for="myDate"> Date:</label>
+<input type="date" id="myDate" value="2023-05-24">
+<button onclick="convertTime()">Submit</button>
+
+
+
+<p>Here are the 12 patterns that day:</p>
+
+<p id="demo"></p>
+
+<h2>Or select a route and know what the next upcoming times for that route are.</h2>
+
+<p>Use these two stupid boxes to select what you want to see, and how many.</p>
+
+<p id="droplist"><label for="routeNumber">Route: </label><select id="routeNumber"><option value="1" selected="selected">Glass Dragon + Jewel</option><option value="2">Glass Dragon + Squid</option><option value="3">Squid + Mussels</option><option value="4">Hells Claw + Mussels</option><option value="5">Taniwha + Mussels</option><option value="6">Taniwha + Squid</option></select><br></p>
+
+<label for="printQuantity">Number to Print:</label><input type="number" id="printQuantity" min="1" max="999" value="10">
+<button onclick="printRoutes()">Submit</button>
+
+<p id="poop"></p>
+
+<!-- 
+If you can see this, consider funding my chocolate addiction
+BTC:  1DonutSAQzU7uAyDQBfp3yfpjRxH8btMtf
+LTC:  LdSTEELqdiwcqU6oG9YNSPUcbgNmbGF15v
+DOGE: DPastrybfBtdHzvw2YPHjHyy8cbN2ZECjN
+-->
+
+<script>
+var pattern = [1,2,3,4,5,6,1,2,3,4,5,6,
+2,3,4,5,6,1,2,3,4,5,6,1,
+3,4,5,6,1,2,3,4,5,6,1,2,
+4,5,6,1,2,3,4,5,6,1,2,3,
+5,6,1,2,3,4,5,6,1,2,3,4,
+6,1,2,3,4,5,6,1,2,3,4,5]
+
+
+var routeNames = ["Glass Dragon + Jewel", "Glass Dragon + Squid", "Shrimp + Mussels", "Hells' Claw + Shrimp", "Taniwha + Mussels", "Taniwha + Squid"]
+
+var schedules = ["Sirensong Sea at Sunset, Kugane at Night, One River at Day",
+"Sirensong Sea at Sunset, Kugane at Night, Ruby Sea at Day",
+"Sirensong Sea at Night, Kugane at Day, One River at Sunset",
+"Sirensong Sea at Night, Kugane at Day, Ruby Sea at Sunset",
+"Sirensong Sea at Day, Kugane at Sunset, One River at Night",
+"Sirensong Sea at Day, Kugane at Sunset, Ruby Sea at Night"]
+
+
+
+var timeRegion = 'en-US';
+var timeFormat = { weekday: 'short', month: 'short', day: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', timeZoneName:'short'};
+
+//generate drop down list
+var temptext = "<label for=\"routeNumber\">Route: </label>";
+temptext += "<select id=\"routeNumber\">";
+for (var i = 0; i < routeNames.length; i++) {
+temptext += "<option value=" + (i + 1) + ">" + routeNames[i] + "</option>";
+}
+temptext += "</select><br>";
+document.getElementById("droplist").innerHTML = temptext;
+
+
+//Force myDate box to start at today's date
+//thank you stackoverflow
+var date = new Date();
+var day = date.getDate();
+var month = date.getMonth() + 1;
+var year = date.getFullYear();
+if (month < 10) month = "0" + month;
+if (day < 10) day = "0" + day;
+var today = year + "-" + month + "-" + day;       
+document.getElementById("myDate").value = today;
+
+function convertTime() {
+  var x = document.getElementById("myDate").value;
+  var selectedTime = new Date(x);
+  
+  var selectedTwoHourChunk = Math.floor(selectedTime.getTime() / 1000 / (60*60*2));
+  
+  //align the number that is assigned to the next two hour block to the pattern array
+  var offset = 44;
+  var tempTime = (selectedTwoHourChunk + offset) % pattern.length;
+  
+  var temptext = "";
+  
+  //add tables for formatting
+  temptext += "<table><tr><th>Time</th><th>Route</th><th>Comment</th><th>Schedule</th></tr>";
+  
+  for (var i = 0; i < 12; i++) {
+    var temp = ((tempTime + i >= pattern.length) ? (tempTime + i - pattern.length):(tempTime + i));
+    temptext += "<tr><td>";
+    temptext += new Date((selectedTwoHourChunk + i + 4) * (1000*60*60*2)).toLocaleString(timeRegion, timeFormat);
+    temptext += "</td><td class='cnt'>";
+    temptext += pattern[temp];
+    temptext += "</td><td>";
+    temptext += routeNames[pattern[temp]-1];
+    temptext += "</td><td>";
+    temptext += schedules[pattern[temp]-1];
+    temptext += "</td></tr>";
+   }
+   
+   temptext += "</table>";
+  
+  document.getElementById("demo").innerHTML = temptext;
+}
+
+function printRoutes() {
+  var rN = document.getElementById("routeNumber").value;
+  var pQ = document.getElementById("printQuantity").value;
+  
+  var currentTime = new Date();
+  var currentTwoHourChunks = Math.floor(currentTime.getTime() / 1000 / (60*60*2));
+  
+  //line up the patten array to the 2 hour segment count
+  var offset = 41;
+  var temptime = (currentTwoHourChunks+offset) % pattern.length;
+  
+  var temptext = "";
+  
+  /*
+  //debugging to help find offset
+  temptext += new Date((currentTwoHourChunks) * (1000*60*60*2)).toLocaleString(timeRegion, timeFormat) + "</br>";
+  temptext += "Current chunk " + currentTwoHourChunks + ", pattern " + currentTwoHourChunks % pattern.length + "</br>";
+  for (var j = 0; j < 12; j++) {
+    temptext += "Route is #" + pattern[(temptime+j) % pattern.length] + "</br>";
+  }
+  temptext += "Routes to print: " + pQ + "</br></br>";
+  */
+  
+  temptext += "<table><tr><th>Times</th></tr>";
+  
+  var tries = 0;
+  var matches = 0;
+  var matchedTimes = [];
+  
+  while (matches < pQ && tries < pQ*20) {
+    //ADD offset to find pattern
+    var temp = currentTwoHourChunks + tries + offset;
+    if (pattern[(temp % pattern.length)] == rN) {
+      matchedTimes.push(temp+1);
+      matches++;
+    }
+    tries++;
+  }
+  
+  for (var i = 0; i < matchedTimes.length; i++) {
+    temptext +="<tr><td>";
+    //convert from twoHourChunks to real time
+    //SUBTRACT offset to get real time
+    var tempoop = new Date((matchedTimes[i] - offset) * (1000*60*60*2));
+    temptext += tempoop.toLocaleString(timeRegion, timeFormat);
+    temptext +="</td></tr>";
+  }
+  
+  temptext += "</table>";
+  
+  document.getElementById("poop").innerHTML = temptext;
+}
+</script>
+
+
+</body></html>
