@@ -1,10 +1,12 @@
+<!DOCTYPE html>
 <html><head><meta charset="UTF-8"><title>Another FFXIV Weather Calculator</title>
 <script type="text/javascript" src="./weather.js"></script>
 <script type="text/javascript" src="./jquery-2.1.4.min.js"></script>
 <script type="text/javascript">
 var optionsEnabled = false;
 var maxMatches = 10;
-var maxTries = maxMatches * 432; //A week's worth of windows attempted per match. There will be the rare windows that take 2-3 weeks but this averages out in the search. Looking at you, Ruby.
+// A week's worth of windows attempted per match. There will be the rare windows that take 2-3 weeks but this averages out in the search. Looking at you, Ruby.
+var maxTries = maxMatches * 432;
 
 var displayWeather = function() {
    $("#weatherDiv").text(WeatherFinder.getWeather(new Date(), $("#zoneSelect").val()));
@@ -28,9 +30,12 @@ function findWeather() {
    $("#weatherTableHeaderRow ~ tr").remove()
    if (optionsEnabled && document.getElementById("myDate").value != 0) {
       var weatherStartTime = WeatherFinder.getWeatherTimeFloor(new Date(document.getElementById("myDate").value)).getTime();
-	  const diff = new Date().getTimezoneOffset() * 60 * 1000 + 1;	//calculate time difference between user's timezone and UTC
+	  // Calculate time difference between user's timezone and UTC
+	  // Add one millisecond to avoid scenario where Date() returns a value in previous window
+	  const diff = new Date().getTimezoneOffset() * 60 * 1000 + 1;
 	  weatherStartTime += diff;
    } else {
+      // Add one millisecond to avoid scenario where Date() returns a value in previous window
       var weatherStartTime = WeatherFinder.getWeatherTimeFloor(new Date()).getTime()+1;
    }
    if (optionsEnabled) {
@@ -44,7 +49,8 @@ function findWeather() {
    var tries = 0;
    var matches = 0;
    var weather = WeatherFinder.getWeather(weatherStartTime, zone);
-   var prevWeather = WeatherFinder.getWeather(weatherStartTime-1400000, zone); //go back one window in milliseconds
+   // Go back one window in milliseconds
+   var prevWeather = WeatherFinder.getWeather(weatherStartTime-1400000, zone);
    while (tries < maxTries && matches < maxMatches) {
       var weatherMatch = weather == null;
       var prevWeatherMatch = prevWeather == null;
@@ -71,21 +77,18 @@ function findWeather() {
 			tempMinutes = document.getElementById("offset").value % 100;
 			temptime = tempHour + (tempMinutes / 60);
 			if (tempMinutes < 10) {
-				tempMinutes = "0" + tempMinutes;	//convert to string and append digit, safe at this step
+			    // Convert to string and append digit, safe at this step
+				tempMinutes = "0" + tempMinutes;
 			}
 			$("#weatherTable").append('<tr><td>' + prevWeather + '</td><td>' + weather + '</td><td>' + (weatherStartHour + tempHour) + ':' + tempMinutes + '</td><td>' + new Date(temptime * 175 * 1000 + weatherStartTime) + '</td></tr>');
-			//$("#weatherTable").append('<tr><td>' + prevWeather + '</td><td>' + weather + '</td><td>' + (weatherStartHour + tempHour) + ':' + tempMinutes + '</td><td>' + (temptime * 175 * 1000 + weatherStartTime)/1000 + '</td></tr>');
-			//$("#weatherTable").append('<tr><td>' + new Date(temptime * 175 * 1000 + weatherStartTime) + '</td></tr>');
 		 } else {
 			$("#weatherTable").append('<tr><td>' + prevWeather + '</td><td>' + weather + '</td><td>' + weatherStartHour + ':00</td><td>' + new Date(weatherStartTime) + '</td></tr>');
-			//$("#weatherTable").append('<tr><td>' + prevWeather + '</td><td>' + weather + '</td><td>' + weatherStartHour + ':00</td><td>' + (weatherStartTime)/1000 + '</td></tr>');
-			//$("#weatherTable").append('<tr><td>' + new Date(weatherStartTime) + '</td></tr>');
 		 }
 
-         //$("#weatherTable").append('<tr><td>' + prevWeather + '</td><td>' + weather + '</td><td>' + weatherStartHour + ':00</td><td>' + weatherDate + '</td></tr>');
          matches++;
       }
-      weatherStartTime += 8 * 175 * 1000; // Increment by 8 Eorzean hours
+	  // Increment by 8 Eorzean hours
+      weatherStartTime += 8 * 175 * 1000;
       weatherStartHour = WeatherFinder.getEorzeaHour(weatherStartTime);
       prevWeather = weather;
       weather = WeatherFinder.getWeather(weatherStartTime, zone);
@@ -96,14 +99,31 @@ function findWeather() {
    }
 }
 
+function populateZoneSelect() {
+   // force "Select a Zone" option on page load or refresh
+   document.getElementById('zoneSelect').value="";
+   
+   var selects = $("#zoneSelect");
+   
+   // use keys in weatherLists array to populate zoneSelect
+   for (var selectedOptions in WeatherFinder.weatherLists) {
+      selects.append('<option value="' + selectedOptions + '">' + selectedOptions + '</option>');
+   }
+   
+   //Also clear options checkbox
+   document.getElementById("advancedOptions").checked = false;
+}
+
 function populateWeather() {
-   var weathers = WeatherFinder.weatherLists[$("#zoneSelect").val()];
+   //var weathers = WeatherFinder.weatherLists[$("#zoneSelect").val()];
+   //check for duplicates
+   var weathers = WeatherFinder.weatherLists[$("#zoneSelect").val()].filter( function(item,pos) { return WeatherFinder.weatherLists[$("#zoneSelect").val()].indexOf(item) == pos;});
+   
    var selects = $("#weatherSelect").add("#previousWeatherSelect");
    selects.empty();
    selects.append('<option value="" selected="selected">Any</option>');
    for (var w in weathers) {
-      //selects.append('<option value="' + weathers[w] + '">' + weathers[w] + weathers.length + '</option>');
-	  selects.append('<option value="' + weathers[w] + '">' + weathers[w] + '</option>');
+      selects.append('<option value="' + weathers[w] + '">' + weathers[w] + '</option>');
    }
 }
 
@@ -126,72 +146,12 @@ body {
 }
 </style>
 </head>
-<body>
+
+<body onload="populateZoneSelect();">
 
 <table>
 <tbody><tr><td>Zone: </td><td><select id="zoneSelect" onchange="populateWeather()">
 <option value="">Select a Zone</option>
-<option value="Limsa Lominsa">Limsa Lominsa</option>
-<option value="Middle La Noscea">Middle La Noscea</option>
-<option value="Lower La Noscea">Lower La Noscea</option>
-<option value="Eastern La Noscea">Eastern La Noscea</option>
-<option value="Western La Noscea">Western La Noscea</option>
-<option value="Upper La Noscea">Upper La Noscea</option>
-<option value="Outer La Noscea">Outer La Noscea</option>
-<!-- Who wants Wolve's Den Pier lmao -->
-<option value="Mist">Mist</option>
-<option value="Unnamed Island">Unnamed Island</option>
-<option value="Gridania">Gridania</option>
-<option value="Central Shroud">Central Shroud</option>
-<option value="East Shroud">East Shroud</option>
-<option value="South Shroud">South Shroud</option>
-<option value="North Shroud">North Shroud</option>
-<option value="The Lavender Beds">The Lavender Beds</option>
-<option value="Ul'dah">Ul'dah</option>
-<option value="Western Thanalan">Western Thanalan</option>
-<option value="Central Thanalan">Central Thanalan</option>
-<option value="Eastern Thanalan">Eastern Thanalan</option>
-<option value="Southern Thanalan">Southern Thanalan</option>
-<option value="Northern Thanalan">Northern Thanalan</option>
-<option value="The Goblet">The Goblet</option>
-<option value="Mor Dhona">Mor Dhona</option>
-<option value="Ishgard">Ishgard</option>
-<option value="Coerthas Central Highlands">Coerthas Central Highlands</option>
-<option value="Coerthas Western Highlands">Coerthas Western Highlands</option>
-<option value="The Sea of Clouds">The Sea of Clouds</option>
-<option value="Azys Lla">Azys Lla</option>
-<option value="The Dravanian Forelands">The Dravanian Forelands</option>
-<option value="The Dravanian Hinterlands">The Dravanian Hinterlands</option>
-<option value="The Churning Mists">The Churning Mists</option>
-<option value="Idyllshire">Idyllshire</option>
-<option value="Rhalgr's Reach">Rhalgr's Reach</option>
-<option value="The Fringes">The Fringes</option>
-<option value="The Peaks">The Peaks</option>
-<option value="The Lochs">The Lochs</option>
-<option value="The Ruby Sea">The Ruby Sea</option>
-<option value="Yanxia">Yanxia</option>
-<option value="The Azim Steppe">The Azim Steppe</option>
-<option value="Kugane">Kugane</option>
-<option value="Eureka Anemos">Eureka Anemos</option>
-<option value="Eureka Pagos">Eureka Pagos</option>
-<option value="Eureka Pyros">Eureka Pyros</option>
-<option value="Eureka Hydatos">Eureka Hydatos</option>
-<option value="The Crystarium">The Crystarium</option>
-<option value="Eulmore">Eulmore</option>
-<option value="Lakeland">Lakeland</option>
-<option value="Kholusia">Kholusia</option>
-<option value="Amh Araeng">Amh Araeng</option>
-<option value="Il Mheg">Il Mheg</option>
-<option value="The Rak'tika Greatwood">The Rak'tika Greatwood</option>
-<option value="The Tempest">The Tempest</option>
-<option value="Old Sharlayan">Old Sharlayan</option>
-<option value="Labyrinthos">Labyrinthos</option>
-<option value="Radz-at-Han">Radz-at-Han</option>
-<option value="Thavnair">Thavnair</option>
-<option value="Garlemald">Garlemald</option>
-<option value="Mare Lamentorum">Mare Lamentorum</option>
-<option value="Elpis">Elpis</option>
-<option value="Ultima Thule">Ultima Thule</option>
 </select></td></tr>
 
 <input type="checkbox" id="advancedOptions" onclick="enableOptions(this)" /> Advanced Options<br>
@@ -203,7 +163,7 @@ body {
 
 <div id="optionsArea"></div>
 
-<button onclick="findWeather()">Find Weather</button><br>
+<br><button onclick="findWeather()">Find Weather</button><br><br>
 
 <table id="weatherTable">
 <tbody><tr id="weatherTableHeaderRow"><th>Previous Weather</th><th>Current Weather</th><th>Eorzea Time</th><th>Local Time</th></tr>

@@ -1,12 +1,33 @@
 var WeatherFinder = {
 
 getWeather(timeMillis, zone) {
-    return this.weatherChances[zone](this.calculateForecastTarget(timeMillis));
+
+	var modulo = 0;
+
+	// Sum up the array of numbers to get the modulo value
+	this.weatherRateList[zone].forEach(chanceNumber => {modulo += chanceNumber});
+
+	return this.weatherName(zone,this.calculateForecastTarget(timeMillis, modulo))
 },
 
-calculateForecastTarget: function(timeMillis) { 
+weatherName: function(zone, moduloValue) {
+	
+	var sum = 0;
+	var i = 0;
+
+	// Cycle through array of numbers to find the number range that the moduloValue falls inside of
+	while (i < this.weatherRateList[zone].length && moduloValue >= sum + this.weatherRateList[zone][i]) {
+		sum += this.weatherRateList[zone][i];
+		i++;
+	}
+
+	// Parse list of weather names
+	return this.weatherLists[zone][i]
+},
+
+calculateForecastTarget: function(timeMillis, moduloValue) { 
     // Thanks to Rogueadyn's SaintCoinach library for this calculation.
-    // lDate is the current local time.
+	// Modifications needed, credit to Caf Coleo
 
     var unixSeconds = parseInt(timeMillis / 1000);
     // Get Eorzea hour for weather start
@@ -19,15 +40,16 @@ calculateForecastTarget: function(timeMillis) {
     var totalDays = unixSeconds / 4200;
     totalDays = (totalDays << 32) >>> 0; // Convert to uint
 
-    // 0x64 = 100
+    // Add increment
     var calcBase = totalDays * 100 + increment;
 
-    // 0xB = 11
+    // Perform one round of Xorshift RNG
     var step1 = ((calcBase << 11) ^ calcBase) >>> 0;
     var step2 = ((step1 >>> 8) ^ step1) >>> 0;
 
-    // 0x64 = 100
-    return step2 % 100;
+    // Modulo the result to fit the weather number ranges
+    // It's not always 100, thanks to Caf Coleo for testing this!
+    return step2 % moduloValue;
 },
 
 getEorzeaHour: function(timeMillis) {
@@ -46,68 +68,78 @@ getWeatherTimeFloor: function(date) {
     return new Date(startUnixSeconds * 1000);
 },
 
-weatherChances: {
-"Limsa Lominsa": function(chance) { if (chance < 20) { return "Clouds"; } else if (chance < 50) { return "Clear Skies"; } else if (chance < 80) { return "Fair Skies"; } else if (chance < 90) { return "Fog"; } else { return "Rain"; } },
-"Middle La Noscea": function(chance) { if (chance < 20) { return "Clouds"; } else if (chance < 50) { return "Clear Skies"; } else if (chance < 70) { return "Fair Skies"; } else if (chance < 80) { return "Wind"; } else if (chance < 90) { return "Fog"; } else { return "Rain"; } },
-"Lower La Noscea": function(chance) { if (chance < 20) { return "Clouds"; } else if (chance < 50) { return "Clear Skies"; } else if (chance < 70) { return "Fair Skies"; } else if (chance < 80) { return "Wind"; } else if (chance < 90) { return "Fog"; } else { return "Rain"; } },
-"Eastern La Noscea": function(chance) { if (chance < 5) { return "Fog"; } else if (chance < 50) { return "Clear Skies"; } else if (chance < 80) { return "Fair Skies"; } else if (chance < 90) { return "Clouds"; } else if (chance < 95) { return "Rain"; } else { return "Showers"; } },
-"Western La Noscea": function(chance) { if (chance < 10) { return "Fog"; } else if (chance < 40) { return "Clear Skies"; } else if (chance < 60) { return "Fair Skies"; } else if (chance < 80) { return "Clouds"; } else if (chance < 90) { return "Wind"; } else { return "Gales"; } },
-"Upper La Noscea": function(chance) { if (chance < 30) { return "Clear Skies"; } else if (chance < 50) { return "Fair Skies"; } else if (chance < 70) { return "Clouds"; } else if (chance < 80) { return "Fog"; } else if (chance < 90) { return "Thunder"; } else { return "Thunderstorms"; } },
-"Outer La Noscea": function(chance) { if (chance < 30) { return "Clear Skies"; } else if (chance < 50) { return "Fair Skies"; } else if (chance < 70) { return "Clouds"; } else if (chance < 85) { return "Fog"; } else { return "Rain"; } },
-"Mist": function(chance) { if (chance < 20) { return "Clouds"; } else if (chance < 50) { return "Clear Skies"; } else if (chance < 70) { return "Fair Skies"; } else if (chance < 80) { return "Fair Skies"; } else if (chance < 90) { return "Fog"; } else { return "Rain"; } },
-"Unnamed Island": function(chance) { if (chance < 25) { return "Clear Skies"; } else if (chance < 70) { return "Fair Skies"; } else if (chance < 80) { return "Clouds"; } else if (chance < 90) { return "Rain"; } else if (chance < 95) { return "Fog"; } else { return "Showers"; } },
-"Gridania": function(chance) { if (chance < 5) { return "Rain"; } else if (chance < 20) { return "Rain"; } else if (chance < 30) { return "Fog"; } else if (chance < 40) { return "Clouds"; } else if (chance < 55) { return "Fair Skies"; } else if (chance < 85) { return "Clear Skies"; } else { return "Fair Skies"; } },
-"Central Shroud": function(chance) { if (chance < 5) { return "Thunder"; } else if (chance < 20) { return "Rain"; } else if (chance < 30) { return "Fog"; } else if (chance < 40) { return "Clouds"; } else if (chance < 55) { return "Fair Skies"; } else if (chance < 85) { return "Clear Skies"; } else { return "Fair Skies"; } },
-"East Shroud": function(chance) { if (chance < 5) { return "Thunder"; } else if (chance < 20) { return "Rain"; } else if (chance < 30) { return "Fog"; } else if (chance < 40) { return "Clouds"; } else if (chance < 55) { return "Fair Skies"; } else if (chance < 85) { return "Clear Skies"; } else { return "Fair Skies"; } },
-"South Shroud": function(chance) { if (chance < 5) { return "Fog"; } else if (chance < 10) { return "Thunderstorms"; } else if (chance < 25) { return "Thunder"; } else if (chance < 30) { return "Fog"; } else if (chance < 40) { return "Clouds"; } else if (chance < 70) { return "Fair Skies"; } else { return "Clear Skies"; } },
-"North Shroud": function(chance) { if (chance < 5) { return "Fog"; } else if (chance < 10) { return "Showers"; } else if (chance < 25) { return "Rain"; } else if (chance < 30) { return "Fog"; } else if (chance < 40) { return "Clouds"; } else if (chance < 70) { return "Fair Skies"; } else { return "Clear Skies"; } },
-"The Lavender Beds": function(chance) { if (chance < 5) { return "Clouds"; } else if (chance < 20) { return "Rain"; } else if (chance < 30) { return "Fog"; } else if (chance < 40) { return "Clouds"; } else if (chance < 55) { return "Fair Skies"; } else if (chance < 85) { return "Clear Skies"; } else { return "Fair Skies"; } },
-"Ul'dah": function(chance) { if (chance < 40) { return "Clear Skies"; } else if (chance < 60) { return "Fair Skies"; } else if (chance < 85) { return "Clouds"; } else if (chance < 95) { return "Fog"; } else { return "Rain"; } },
-"Western Thanalan": function(chance) { if (chance < 40) { return "Clear Skies"; } else if (chance < 60) { return "Fair Skies"; } else if (chance < 85) { return "Clouds"; } else if (chance < 95) { return "Fog"; } else { return "Rain"; } },
-"Central Thanalan": function(chance) { if (chance < 15) { return "Dust Storms"; } else if (chance < 55) { return "Clear Skies"; } else if (chance < 75) { return "Fair Skies"; } else if (chance < 85) { return "Clouds"; } else if (chance < 95) { return "Fog"; } else { return "Rain"; } },
-"Eastern Thanalan": function(chance) { if (chance < 40) { return "Clear Skies"; } else if (chance < 60) { return "Fair Skies"; } else if (chance < 70) { return "Clouds"; } else if (chance < 80) { return "Fog"; } else if (chance < 85) { return "Rain"; } else { return "Showers"; } },
-"Southern Thanalan": function(chance) { if (chance < 20) { return "Heat Waves"; } else if (chance < 60) { return "Clear Skies"; } else if (chance < 80) { return "Fair Skies"; } else if (chance < 90) { return "Clouds"; } else { return "Fog"; } },
-"Northern Thanalan": function(chance) { if (chance < 5) { return "Clear Skies"; } else if (chance < 20) { return "Fair Skies"; } else if (chance < 50) { return "Clouds"; } else { return "Fog"; } },
-"The Goblet": function(chance) { if (chance < 40) { return "Clear Skies"; } else if (chance < 60) { return "Fair Skies"; } else if (chance < 85) { return "Clouds"; } else if (chance < 95) { return "Fog"; } else { return "Rain"; } },
-"Mor Dhona": function(chance) {if (chance < 15) {return "Clouds";}  else if (chance < 30) {return "Fog";}  else if (chance < 60) {return "Gloom";}  else if (chance < 75) {return "Clear Skies";}  else {return "Fair Skies";}},
-"Ishgard": function(chance) {if (chance < 60) {return "Snow";}  else if (chance < 70) {return "Fair Skies";}  else if (chance < 75) {return "Clear Skies";}  else if (chance < 90) {return "Clouds";}  else {return "Fog";}},
-"Coerthas Central Highlands": function(chance) {if (chance < 20) {return "Blizzards";}  else if (chance < 60) {return "Snow";}  else if (chance < 70) {return "Fair Skies";}  else if (chance < 75) {return "Clear Skies";}  else if (chance < 90) {return "Clouds";}  else {return "Fog";}},
-"Coerthas Western Highlands": function(chance) {if (chance < 20) {return "Blizzards";}  else if (chance < 60) {return "Snow";}  else if (chance < 70) {return "Fair Skies";}  else if (chance < 75) {return "Clear Skies";}  else if (chance < 90) {return "Clouds";}  else {return "Fog";}},
-"The Sea of Clouds": function(chance) {if (chance < 30) {return "Clear Skies";}  else if (chance < 60) {return "Fair Skies";}  else if (chance < 70) {return "Clouds";}  else if (chance < 80) {return "Fog";}  else if (chance < 90) {return "Wind";}  else {return "Umbral Wind";}},
-"Azys Lla": function(chance) {if (chance < 35) {return "Fair Skies";}  else if (chance < 70) {return "Clouds";}  else {return "Thunder";}},
-"The Dravanian Forelands": function(chance) {if (chance < 10) {return "Clouds";}  else if (chance < 20) {return "Fog";}  else if (chance < 30) {return "Thunder";}  else if (chance < 40) {return "Dust Storms";}  else if (chance < 70) {return "Clear Skies";}  else {return "Fair Skies";}},
-"The Dravanian Hinterlands": function(chance) {if (chance < 10) {return "Clouds";}  else if (chance < 20) {return "Fog";}  else if (chance < 30) {return "Rain";}  else if (chance < 40) {return "Showers";}  else if (chance < 70) {return "Clear Skies";}  else {return "Fair Skies";}},
-"The Churning Mists": function(chance) {if (chance < 10) {return "Clouds";}  else if (chance < 20) {return "Gales";}  else if (chance < 40) {return "Umbral Static";}  else if (chance < 70) {return "Clear Skies";}  else {return "Fair Skies";}},
-"Idyllshire": function(chance) {if (chance < 10) {return "Clouds";}  else if (chance < 20) {return "Fog";}  else if (chance < 30) {return "Rain";}  else if (chance < 40) {return "Showers";}  else if (chance < 70) {return "Clear Skies";}  else {return "Fair Skies";}},
-// Data format changed from aggregate to marginal breakpoints
-"Rhalgr's Reach": function(chance) { if ((chance -= 15) < 0) { return "Clear Skies"; } else if ((chance -= 45) < 0) { return "Fair Skies"; } else if ((chance -= 20) < 0) { return "Clouds"; } else if ((chance -= 10) < 0) { return "Fog"; } else { return "Thunder"; } },
-"The Fringes": function(chance) { if ((chance -= 15) < 0) { return "Clear Skies"; } else if ((chance -= 45) < 0) { return "Fair Skies"; } else if ((chance -= 20) < 0) { return "Clouds"; } else if ((chance -= 10) < 0) { return "Fog"; } else { return "Thunder"; } },
-"The Peaks": function(chance) { if ((chance -= 10) < 0) { return "Clear Skies"; } else if ((chance -= 50) < 0) { return "Fair Skies"; } else if ((chance -= 15) < 0) { return "Clouds"; } else if ((chance -= 10) < 0) { return "Fog"; } else if ((chance -= 10) < 0) { return "Wind"; } else { return "Dust Storms"; } },
-"The Lochs": function(chance) { if ((chance -= 20) < 0) { return "Clear Skies"; } else if ((chance -= 40) < 0) { return "Fair Skies"; } else if ((chance -= 20) < 0) { return "Clouds"; } else if ((chance -= 10) < 0) { return "Fog"; } else { return "Thunderstorms"; } },
-"Kugane": function(chance) { if ((chance -= 10) < 0) { return "Rain"; } else if ((chance -= 10) < 0) { return "Fog"; } else if ((chance -= 20) < 0) { return "Clouds"; } else if ((chance -= 40) < 0) { return "Fair Skies"; } else { return "Clear Skies"; } },
-"The Ruby Sea": function(chance) { if ((chance -= 10) < 0) { return "Thunder"; } else if ((chance -= 10) < 0) { return "Wind"; } else if ((chance -= 15) < 0) { return "Clouds"; } else if ((chance -= 40) < 0) { return "Fair Skies"; } else { return "Clear Skies"; } },
-"Yanxia": function(chance) { if ((chance -= 5) < 0) { return "Showers"; } else if ((chance -= 10) < 0) { return "Rain"; } else if ((chance -= 10) < 0) { return "Fog"; } else if ((chance -= 15) < 0) { return "Clouds"; } else if ((chance -= 40) < 0) { return "Fair Skies"; } else { return "Clear Skies"; } },
-"The Azim Steppe": function(chance) { if ((chance -= 5) < 0) { return "Gales"; } else if ((chance -= 5) < 0) { return "Wind"; } else if ((chance -= 7) < 0) { return "Rain"; } else if ((chance -= 8) < 0) { return "Fog"; } else if ((chance -= 10) < 0) { return "Clouds"; } else if ((chance -= 40) < 0) { return "Fair Skies"; } else { return "Clear Skies"; } },
-"Eureka Anemos": function(chance) { if ((chance -= 30) < 0) { return "Fair Skies"; } else if ((chance -= 30) < 0) { return "Gales"; } else if ((chance -= 30) < 0) { return "Showers"; } else { return "Snow"; } },
-"Eureka Pagos": function(chance) { if ((chance -= 10) < 0) { return "Clear Skies"; } else if ((chance -= 18) < 0) { return "Fog"; } else if ((chance -= 18) < 0) { return "Heat Waves"; } else if ((chance -= 18) < 0) { return "Snow"; } else if ((chance -= 18) < 0) { return "Thunder"; } else { return "Brizzards"; } },
-"Eureka Pyros": function(chance) { if ((chance -= 10) < 0) { return "Fair Skies"; } else if ((chance -= 18) < 0) { return "Heat Waves"; } else if ((chance -= 18) < 0) { return "Thunder"; } else if ((chance -= 18) < 0) { return "Blizzards"; } else if ((chance -= 18) < 0) { return "Umbral Wind"; } else { return "Snow"; } },
-"Eureka Hydatos": function(chance) { if ((chance -= 12) < 0) { return "Fair Skies"; } else if ((chance -= 22) < 0) { return "Showers"; } else if ((chance -= 22) < 0) { return "Gloom"; } else if ((chance -= 22) < 0) { return "Thunderstorms"; } else { return "Snow"; } },
-"The Crystarium": function(chance) { if ((chance -= 20) < 0) { return "Clear Skies"; } else if ((chance -= 40) < 0) { return "Fair Skies"; } else if ((chance -= 15) < 0) { return "Clouds"; } else if ((chance -= 10) < 0) { return "Fog"; } else if ((chance -= 10) < 0) { return "Rain"; } else { return "Thunderstorms"; } },
-"Eulmore": function(chance) { if ((chance -= 10) < 0) { return "Gales"; } else if ((chance -= 10) < 0) { return "Rain"; } else if ((chance -= 10) < 0) { return "Fog"; } else if ((chance -= 15) < 0) { return "Clouds"; } else if ((chance -= 40) < 0) { return "Fair Skies"; } else { return "Clear Skies"; } },
-"Lakeland": function(chance) { if ((chance -= 20) < 0) { return "Clear Skies"; } else if ((chance -= 40) < 0) { return "Fair Skies"; } else if ((chance -= 15) < 0) { return "Clouds"; } else if ((chance -= 10) < 0) { return "Fog"; } else if ((chance -= 10) < 0) { return "Rain"; } else { return "Thunderstorms"; } },
-"Kholusia": function(chance) { if ((chance -= 10) < 0) { return "Gales"; } else if ((chance -= 10) < 0) { return "Rain"; } else if ((chance -= 10) < 0) { return "Fog"; } else if ((chance -= 15) < 0) { return "Clouds"; } else if ((chance -= 40) < 0) { return "Fair Skies"; } else { return "Clear Skies"; } },
-"Amh Araeng": function(chance) { if ((chance -= 45) < 0) { return "Fair Skies"; } else if ((chance -= 15) < 0) { return "Clouds"; } else if ((chance -= 10) < 0) { return "Dust Storms"; } else if ((chance -= 10) < 0) { return "Heat Waves"; } else { return "Clear Skies"; } },
-"Il Mheg": function(chance) { if ((chance -= 10) < 0) { return "Rain"; } else if ((chance -= 10) < 0) { return "Fog"; } else if ((chance -= 15) < 0) { return "Clouds"; } else if ((chance -= 10) < 0) { return "Thunderstorms"; } else if ((chance -= 15) < 0) { return "Clear Skies"; } else { return "Fair Skies"; } },
-"The Rak'tika Greatwood": function(chance) { if ((chance -= 10) < 0) { return "Fog"; } else if ((chance -= 10) < 0) { return "Rain"; } else if ((chance -= 10) < 0) { return "Umbral Wind"; } else if ((chance -= 15) < 0) { return "Clear Skies"; } else if ((chance -= 40) < 0) { return "Fair Skies"; } else { return "Clouds"; } },
-"The Tempest": function(chance) { if ((chance -= 20) < 0) { return "Clouds"; } else if ((chance -= 60) < 0) { return "Fair Skies"; } else { return "Clear Skies"; } },
-"Old Sharlayan": function(chance) { if ((chance -= 10) < 0) { return "Clear Skies"; } else if ((chance -= 40) < 0) { return "Fair Skies"; } else if ((chance -= 20) < 0) { return "Clouds"; } else if ((chance -= 15) < 0) { return "Fog"; } else { return "Snow"; } },
-"Labyrinthos": function(chance) { if ((chance -= 15) < 0) { return "Clear Skies"; } else if ((chance -= 45) < 0) { return "Fair Skies"; } else if ((chance -= 25) < 0) { return "Clouds"; } else { return "Rain"; } },
-"Radz-at-Han": function(chance) { if ((chance -= 10) < 0) { return "Fog"; } else if ((chance -= 15) < 0) { return "Rain"; } else if ((chance -= 15) < 0) { return "Clear Skies"; } else if ((chance -= 45) < 0) { return "Fair Skies"; } else { return "Clouds"; } },
-"Thavnair": function(chance) { if ((chance -= 10) < 0) { return "Fog"; } else if ((chance -= 10) < 0) { return "Rain"; } else if ((chance -= 5) < 0) { return "Showers"; } else if ((chance -= 15) < 0) { return "Clear Skies"; } else if ((chance -= 45) < 0) { return "Fair Skies"; } else { return "Clouds"; } },
-"Garlemald": function(chance) { if ((chance -= 45) < 0) { return "Snow"; } else if ((chance -= 5) < 0) { return "Thunderstorms"; } else if ((chance -= 5) < 0) { return "Rain"; } else if ((chance -= 5) < 0) { return "Fog"; } else if ((chance -= 25) < 0) { return "Clouds"; } else if ((chance -= 10) < 0) { return "Fair Skies"; } else { return "Clear Skies"; } },
-"Mare Lamentorum": function(chance) { if ((chance -= 15) < 0) { return "Umbral Wind"; } else if ((chance -= 15) < 0) { return "Moon Dust"; } else { return "Fair Skies"; } },
-"Elpis": function(chance) { if ((chance -= 25) < 0) { return "Clouds"; } else if ((chance -= 15) < 0) { return "Umbral Wind"; } else if ((chance -= 45) < 0) { return "Fair Skies"; } else { return "Clear Skies"; } },
-"Ultima Thule": function(chance) { if ((chance -= 15) < 0) { return "Astromagnetic Storm"; } else if ((chance -= 70) < 0) { return "Fair Skies"; } else { return "Umbral Wind"; } }
+weatherRateList: {
+// Zone name, and array of the numbers used to determine the weather in that zone.
+// Need another array to hold the weather names for each number range
+"Limsa Lominsa": [20, 30, 30, 10, 10],
+"Middle La Noscea": [20, 30, 20, 10, 10, 10],
+"Lower La Noscea": [20, 30, 20, 10, 10, 10],
+"Eastern La Noscea": [5, 45, 30, 10, 5, 5],
+"Western La Noscea": [10, 30, 20, 20, 10, 10],
+"Upper La Noscea": [30, 20, 20, 10, 10, 10],
+"Outer La Noscea": [30, 20, 20, 15, 15],
+"Mist": [20, 30, 30, 10, 10],
+"Unnamed Island": [25, 45, 10, 10, 5, 5],
+"Gridania": [20, 10, 10, 15, 30, 15],
+"Central Shroud": [5, 15, 10, 10, 15, 30, 15],
+"East Shroud": [5, 15, 10, 10, 15, 30, 15],
+"South Shroud": [5, 5, 15, 5, 10, 30, 30],
+"North Shroud": [5, 5, 15, 5, 10, 30, 30],
+"The Lavender Beds": [5, 15, 10, 10, 15, 30, 15],
+"Ul'dah": [40, 20, 25, 10, 5],
+"Western Thanalan": [40, 20, 25, 10, 5],
+"Central Thanalan": [15, 40, 20, 10, 10, 5],
+"Eastern Thanalan": [40, 20, 10, 10, 5, 15],
+"Southern Thanalan": [20, 40, 20, 10, 10],
+"Northern Thanalan": [5, 15, 30, 50],
+"The Goblet": [40, 20, 25, 10, 5],
+"Mor Dhona": [15, 15, 30, 15, 25],
+"Ishgard": [60, 10, 5, 15, 10],
+"Empyreum": [5, 20, 40, 15, 10],
+"Coerthas Central Highlands": [20, 40, 10, 5, 15, 10],
+"Coerthas Western Highlands": [20, 40, 10, 5, 15, 10],
+"The Sea of Clouds": [30, 30, 10, 10, 10, 10],
+"Azys Lla": [35, 35, 30],
+"The Dravanian Forelands": [10, 10, 10, 10, 30, 30],
+"The Dravanian Hinterlands": [10, 10, 10, 10, 30, 30],
+"The Churning Mists": [10, 10, 20, 30, 30],
+"Idyllshire": [10, 10, 10, 10, 30, 30],
+"Rhalgr's Reach": [15, 45, 20, 10, 10],
+"The Fringes": [15, 45, 20, 10, 10],
+"The Peaks": [10, 50, 15, 10, 10, 5],
+"The Lochs": [20, 40, 20, 10, 10],
+"Kugane": [10, 10, 20, 40, 20],
+"Shirogane": [10, 10, 20, 40, 20],
+"The Ruby Sea": [10, 10, 15, 40, 25],
+"Yanxia": [5, 10, 10, 15, 40, 20],
+"The Azim Steppe": [5, 5, 7, 8, 10, 40, 25],
+"Eureka Anemos": [30, 30, 30, 10],
+"Eureka Pagos": [10, 18, 18, 18, 18, 18],
+"Eureka Pyros": [10, 18, 18, 18, 18, 18],
+"Eureka Hydatos": [12, 22, 22, 22, 22],
+"The Crystarium": [20, 40, 15, 10, 10, 5],
+"Eulmore": [10, 10, 10, 15, 40, 15],
+"Lakeland": [20, 40, 15, 10, 10, 5],
+"Kholusia": [10, 10, 10, 15, 40, 15],
+"Amh Araeng": [45, 15, 10, 10, 20],
+"Il Mheg": [10, 10, 15, 10, 15, 40],
+"The Rak'tika Greatwood": [10, 10, 10, 15, 40, 15],
+"The Tempest": [20, 60, 20],
+"Old Sharlayan": [10, 40, 20, 15, 15],
+"Labyrinthos": [15, 45, 25, 15],
+"Radz-at-Han": [10, 15, 15, 45, 15],
+"Thavnair": [10, 10, 5, 15, 45, 15],
+"Garlemald": [45, 5, 5, 5, 25, 10, 5],
+"Mare Lamentorum": [15, 15, 70],
+"Elpis": [25, 15, 45, 15],
+"Ultima Thule": [15, 70, 15],
+"Tuliyollal": [40, 40, 5, 10, 5],
+"Urqopacha": [20, 30, 20, 10, 10, 10],
+"Kozama'uka": [25, 35, 15, 10, 10, 5],
+"Yak T'el": [15, 40, 15, 15, 15],
+"Shaaloani": [5, 45, 20, 15, 15],
+"Heritage Found": [5, 20, 15, 5, 5, 50],
+"Living Memory": [10, 10, 20, 60],
 },
 
 weatherLists: {
@@ -120,7 +152,7 @@ weatherLists: {
 "Outer La Noscea": ["Clear Skies","Fair Skies","Clouds","Fog","Rain" ],
 "Mist": ["Clouds","Clear Skies","Fair Skies","Fog","Rain" ],
 "Unnamed Island": ["Clear Skies","Fair Skies","Clouds","Rain","Fog","Showers" ],
-"Gridania": ["Rain","Fog","Clouds","Fair Skies","Clear Skies"],
+"Gridania": ["Rain","Fog","Clouds","Fair Skies","Clear Skies","Fair Skies"],//why did you do this devs?
 "Central Shroud": ["Thunder","Rain","Fog","Clouds","Fair Skies","Clear Skies"],
 "East Shroud": ["Thunder","Rain","Fog","Clouds","Fair Skies","Clear Skies"],
 "South Shroud": ["Fog","Thunderstorms","Thunder","Clouds","Fair Skies","Clear Skies"],
@@ -135,6 +167,7 @@ weatherLists: {
 "The Goblet": ["Clear Skies","Fair Skies","Clouds","Fog","Rain"],
 "Mor Dhona": ["Clouds", "Fog", "Gloom", "Clear Skies", "Fair Skies"],
 "Ishgard": ["Snow", "Fair Skies", "Clear Skies", "Clouds", "Fog"],
+"Empyreum": ["Snow", "Fair Skies", "Clear Skies", "Clouds", "Fog"],
 "Coerthas Central Highlands": ["Blizzards", "Snow", "Fair Skies", "Clear Skies", "Clouds", "Fog"],
 "Coerthas Western Highlands": ["Blizzards", "Snow", "Fair Skies", "Clear Skies", "Clouds", "Fog"],
 "The Sea of Clouds": ["Clear Skies", "Fair Skies", "Clouds", "Fog", "Wind", "Umbral Wind"],
@@ -148,6 +181,7 @@ weatherLists: {
 "The Peaks": ["Clear Skies","Fair Skies","Clouds","Fog","Wind","Dust Storms"],
 "The Lochs": ["Clear Skies","Fair Skies","Clouds","Fog","Thunderstorms"],
 "Kugane": ["Rain","Fog","Clouds","Fair Skies","Clear Skies"],
+"Shirogane": ["Rain","Fog","Clouds","Fair Skies","Clear Skies"],
 "The Ruby Sea": ["Thunder","Wind","Clouds","Fair Skies","Clear Skies"],
 "Yanxia": ["Showers","Rain","Fog","Clouds","Fair Skies","Clear Skies"],
 "The Azim Steppe": ["Gales","Wind","Rain","Fog","Clouds","Fair Skies","Clear Skies"],
@@ -170,6 +204,13 @@ weatherLists: {
 "Garlemald": ["Snow", "Thunderstorms", "Rain", "Fog", "Clouds", "Fair Skies", "Clear Skies"],
 "Mare Lamentorum": ["Umbral Wind", "Moon Dust", "Fair Skies"],
 "Elpis": ["Clouds", "Umbral Wind", "Fair Skies", "Clear Skies"],
-"Ultima Thule": ["Astromagnetic Storm", "Fair Skies", "Umbral Wind"]
+"Ultima Thule": ["Astromagnetic Storm", "Fair Skies", "Umbral Wind"],
+"Tuliyollal": ["Clear Skies", "Fair Skies", "Clouds", "Fog", "Rain"],
+"Urqopacha": ["Clear Skies", "Fair Skies", "Clouds", "Fog", "Wind", "Snow"],
+"Kozama'uka": ["Clear Skies", "Fair Skies", "Clouds", "Fog", "Rain", "Showers"],
+"Yak T'el": ["Clear Skies", "Fair Skies", "Clouds", "Fog", "Rain"],
+"Shaaloani": ["Clear Skies", "Fair Skies", "Clouds", "Dust Storms", "Gales"],
+"Heritage Found": ["Fair Skies", "Clouds", "Fog", "Rain", "Thunderstorms", "Umbral Static"],
+"Living Memory": ["Rain", "Fog", "Clouds", "Fair Skies"],
 }
 };
