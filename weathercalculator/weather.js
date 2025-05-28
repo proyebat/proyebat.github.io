@@ -141,6 +141,7 @@ weatherRateList: {
 "Heritage Found": [5, 20, 15, 5, 5, 50],
 "Living Memory": [10, 10, 20, 60],
 "Sinus Ardorum": [15, 70, 15],
+"South Horn": [10, 45, 15, 10, 15, 5]
 },
 
 weatherLists: {
@@ -213,6 +214,7 @@ weatherLists: {
 "Shaaloani": ["Clear Skies", "Fair Skies", "Clouds", "Dust Storms", "Gales"],
 "Heritage Found": ["Fair Skies", "Clouds", "Fog", "Rain", "Thunderstorms", "Umbral Static"],
 "Living Memory": ["Rain", "Fog", "Clouds", "Fair Skies"],
-"Sinus Ardorum": ["Moon Dust", "Fair Skies", "Umbral Wind"]
+"Sinus Ardorum": ["Moon Dust", "Fair Skies", "Umbral Wind"],
+"South Horn": ["Clear Skies", "Fair Skies", "Clouds", "Rain", "Atmospheric Phantasms", "Illusory Disturbances"]
 }
 };
